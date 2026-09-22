@@ -26,6 +26,11 @@ public class Order {
 
     private String itemTitle;
 
+    /**
+     * 订阅方案（仅专栏订阅订单使用）：MONTHLY / QUARTERLY / YEARLY
+     */
+    private String plan;
+
     private BigDecimal amount;
 
     private Status status = Status.PENDING;

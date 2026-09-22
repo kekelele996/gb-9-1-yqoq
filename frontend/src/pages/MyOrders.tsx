@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Table, Typography, Tag, Button, Space, Modal, Form, Input, Select, message, Spin } from 'antd'
+import { Table, Typography, Tag, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Spin } from 'antd'
 import { orderApi } from '../api/order'
 import type { Order } from '../types'
 import dayjs from 'dayjs'
@@ -9,6 +9,7 @@ const { Title } = Typography
 function MyOrders() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [invoiceModalVisible, setInvoiceModalVisible] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [invoiceLoading, setInvoiceLoading] = useState(false)
@@ -30,12 +31,53 @@ function MyOrders() {
     }
   }
 
+  const handlePay = async (order: Order) => {
+    setActionLoading(order.id)
+    try {
+      const res = await orderApi.pay(order.id)
+      const body = res.data
+      if (!body?.success) {
+        message.error(body?.message || '支付失败')
+        return
+      }
+      message.success(body?.message || '支付成功，订阅已开通')
+      await loadOrders()
+    } catch (error) {
+      console.error('Pay failed:', error)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleCancel = async (order: Order) => {
+    setActionLoading(order.id)
+    try {
+      const res = await orderApi.cancel(order.id)
+      const body = res.data
+      if (!body?.success) {
+        message.error(body?.message || '取消失败')
+        return
+      }
+      message.success('订单已取消')
+      await loadOrders()
+    } catch (error) {
+      console.error('Cancel failed:', error)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleRequestInvoice = async () => {
     if (!selectedOrder) return
     setInvoiceLoading(true)
     try {
       const values = await form.validateFields()
-      await orderApi.requestInvoice(selectedOrder.id, values)
+      const res = await orderApi.requestInvoice(selectedOrder.id, values)
+      const body = res.data
+      if (!body?.success) {
+        message.error(body?.message || '发票申请失败')
+        return
+      }
       message.success('发票申请已提交')
       setInvoiceModalVisible(false)
       form.resetFields()
@@ -113,14 +155,37 @@ function MyOrders() {
       render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
+      title: '支付时间',
+      dataIndex: 'paidAt',
+      key: 'paidAt',
+      render: (time: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'),
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_: any, record: Order) => (
         <Space>
           {record.status === 'PENDING' && (
-            <Button type="primary" size="small">
-              去支付
-            </Button>
+            <>
+              <Button
+                type="primary"
+                size="small"
+                loading={actionLoading === record.id}
+                onClick={() => handlePay(record)}
+              >
+                去支付
+              </Button>
+              <Popconfirm
+                title="确定取消该订单吗？"
+                okText="确定"
+                cancelText="再想想"
+                onConfirm={() => handleCancel(record)}
+              >
+                <Button size="small" danger loading={actionLoading === record.id}>
+                  取消订单
+                </Button>
+              </Popconfirm>
+            </>
           )}
           {record.status === 'PAID' && (
             <Button

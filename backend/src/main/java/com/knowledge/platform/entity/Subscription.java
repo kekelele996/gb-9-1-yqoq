@@ -2,6 +2,7 @@ package com.knowledge.platform.entity;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -28,6 +29,9 @@ public class Subscription {
     private Status status = Status.ACTIVE;
 
     private String orderId;
+
+    @Transient
+    private Column column;
 
     private LocalDateTime createdAt;
 

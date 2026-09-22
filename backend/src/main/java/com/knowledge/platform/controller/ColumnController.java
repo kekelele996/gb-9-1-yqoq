@@ -5,11 +5,11 @@ import com.knowledge.platform.dto.ColumnCreateRequest;
 import com.knowledge.platform.dto.SubscribeRequest;
 import com.knowledge.platform.entity.Article;
 import com.knowledge.platform.entity.Column;
-import com.knowledge.platform.entity.Subscription;
+import com.knowledge.platform.entity.Order;
 import com.knowledge.platform.security.CurrentUserUtil;
 import com.knowledge.platform.service.ArticleService;
 import com.knowledge.platform.service.ColumnService;
-import com.knowledge.platform.service.SubscriptionService;
+import com.knowledge.platform.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +30,7 @@ public class ColumnController {
     private ArticleService articleService;
 
     @Autowired
-    private SubscriptionService subscriptionService;
+    private OrderService orderService;
 
     @Autowired
     private CurrentUserUtil currentUserUtil;
@@ -75,13 +75,13 @@ public class ColumnController {
     }
 
     @PostMapping("/{id}/subscribe")
-    public ApiResponse<Subscription> subscribe(
+    public ApiResponse<Order> subscribe(
             @PathVariable String id,
             @RequestBody SubscribeRequest request) {
         String userId = currentUserUtil.getCurrentUserId();
         if (userId == null) {
             return ApiResponse.error("请先登录");
         }
-        return subscriptionService.subscribe(userId, id, request);
+        return orderService.createColumnSubscriptionOrder(userId, id, request.getPlan());
     }
 }

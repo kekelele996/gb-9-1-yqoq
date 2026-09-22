@@ -10,6 +10,8 @@ export const orderApi = {
 
   pay: (orderId: string) => api.post(`/orders/${orderId}/pay`),
 
+  cancel: (orderId: string) => api.post(`/orders/${orderId}/cancel`),
+
   requestInvoice: (orderId: string, data: any) =>
     api.post(`/orders/${orderId}/invoice`, data),
 }

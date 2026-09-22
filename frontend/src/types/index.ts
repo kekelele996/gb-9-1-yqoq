@@ -97,9 +97,11 @@ export interface Order {
   type: 'COLUMN_SUBSCRIPTION' | 'AUDIO_PURCHASE' | 'EBOOK_PURCHASE'
   itemId: string
   itemTitle: string
+  plan?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
   amount: number
   status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED'
   paymentMethod?: 'ALIPAY'
+  paymentId?: string
   paidAt?: string
   createdAt: string
 }
@@ -108,11 +110,19 @@ export interface Subscription {
   id: string
   userId: string
   columnId: string
-  column: Column
+  column?: Column
+  columnTitle?: string
+  columnCover?: string
+  columnCategory?: string
   plan: 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
   startDate: string
   endDate: string
   status: 'ACTIVE' | 'EXPIRED'
+  active?: boolean
+  orderId?: string
+  orderNo?: string
+  amount?: number
+  createdAt: string
 }
 
 export interface PointsAccount {

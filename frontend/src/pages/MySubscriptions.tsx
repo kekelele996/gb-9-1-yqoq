@@ -41,6 +41,9 @@ function MySubscriptions() {
     return dayjs(endDate).isBefore(dayjs())
   }
 
+  const getColumnTitle = (sub: Subscription) =>
+    sub.columnTitle || sub.column?.title || '专栏'
+
   return (
     <div>
       <Title level={2}>我的订阅</Title>
@@ -66,7 +69,7 @@ function MySubscriptions() {
                   <Card.Meta
                     title={
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{sub.column?.title}</span>
+                        <span>{getColumnTitle(sub)}</span>
                         {isExpired(sub.endDate) ? (
                           <Tag color="red">已过期</Tag>
                         ) : (
@@ -78,6 +81,9 @@ function MySubscriptions() {
                       <div>
                         <div style={{ marginBottom: 8 }}>
                           <Tag color="purple">{getPlanLabel(sub.plan)}</Tag>
+                          {sub.amount != null && (
+                            <Tag color="orange">实付 ¥{sub.amount}</Tag>
+                          )}
                         </div>
                         <div style={{ color: '#999', fontSize: 12 }}>
                           开始：{dayjs(sub.startDate).format('YYYY-MM-DD')}
@@ -85,6 +91,11 @@ function MySubscriptions() {
                         <div style={{ color: '#999', fontSize: 12 }}>
                           到期：{dayjs(sub.endDate).format('YYYY-MM-DD')}
                         </div>
+                        {sub.orderNo && (
+                          <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
+                            订单号：{sub.orderNo}
+                          </div>
+                        )}
                       </div>
                     }
                   />

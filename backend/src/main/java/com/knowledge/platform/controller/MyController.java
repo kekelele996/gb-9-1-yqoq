@@ -1,11 +1,10 @@
 package com.knowledge.platform.controller;
 
 import com.knowledge.platform.dto.ApiResponse;
-import com.knowledge.platform.dto.SubscribeRequest;
+import com.knowledge.platform.dto.SubscriptionVO;
 import com.knowledge.platform.entity.Order;
-import com.knowledge.platform.entity.Subscription;
-import com.knowledge.platform.repository.OrderRepository;
 import com.knowledge.platform.security.CurrentUserUtil;
+import com.knowledge.platform.service.OrderService;
 import com.knowledge.platform.service.SubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,13 +20,13 @@ public class MyController {
     private SubscriptionService subscriptionService;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderService orderService;
 
     @Autowired
     private CurrentUserUtil currentUserUtil;
 
     @GetMapping("/subscriptions")
-    public ApiResponse<Page<Subscription>> mySubscriptions(
+    public ApiResponse<Page<SubscriptionVO>> mySubscriptions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         String userId = currentUserUtil.getCurrentUserId();
@@ -47,6 +46,6 @@ public class MyController {
             return ApiResponse.error("请先登录");
         }
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ApiResponse.success(orderRepository.findByUserId(userId, pageable));
+        return orderService.getMyOrders(userId, pageable);
     }
 }

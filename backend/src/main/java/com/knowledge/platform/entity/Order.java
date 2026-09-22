@@ -26,6 +26,8 @@ public class Order {
 
     private String itemTitle;
 
+    private Subscription.Plan plan;
+
     private BigDecimal amount;
 
     private Status status = Status.PENDING;

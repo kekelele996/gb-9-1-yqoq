@@ -2,10 +2,9 @@ package com.knowledge.platform.controller;
 
 import com.knowledge.platform.dto.ApiResponse;
 import com.knowledge.platform.dto.ColumnCreateRequest;
-import com.knowledge.platform.dto.SubscribeRequest;
+import com.knowledge.platform.dto.SubscriptionVO;
 import com.knowledge.platform.entity.Article;
 import com.knowledge.platform.entity.Column;
-import com.knowledge.platform.entity.Subscription;
 import com.knowledge.platform.security.CurrentUserUtil;
 import com.knowledge.platform.service.ArticleService;
 import com.knowledge.platform.service.ColumnService;
@@ -74,14 +73,16 @@ public class ColumnController {
         return ApiResponse.success(articleOpt.get());
     }
 
-    @PostMapping("/{id}/subscribe")
-    public ApiResponse<Subscription> subscribe(
-            @PathVariable String id,
-            @RequestBody SubscribeRequest request) {
+    /**
+     * 查询当前用户对该专栏的订阅结果（含订单号、金额、有效期），
+     * 供专栏详情展示下单/支付结果；未登录或未订阅时 data 为 null。
+     */
+    @GetMapping("/{id}/my-subscription")
+    public ApiResponse<SubscriptionVO> mySubscription(@PathVariable String id) {
         String userId = currentUserUtil.getCurrentUserId();
         if (userId == null) {
-            return ApiResponse.error("请先登录");
+            return ApiResponse.success(null);
         }
-        return subscriptionService.subscribe(userId, id, request);
+        return ApiResponse.success(subscriptionService.getMySubscription(userId, id));
     }
 }

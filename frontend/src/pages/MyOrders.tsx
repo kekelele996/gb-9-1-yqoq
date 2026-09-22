@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Table, Typography, Tag, Button, Space, Modal, Form, Input, Select, message, Spin } from 'antd'
+import { Table, Typography, Tag, Button, Space, Modal, Form, Input, Select, message, Spin, Popconfirm } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import { orderApi } from '../api/order'
 import type { Order } from '../types'
 import dayjs from 'dayjs'
 
 const { Title } = Typography
 
+const PLAN_LABELS: Record<string, string> = {
+  MONTHLY: '月付',
+  QUARTERLY: '季付',
+  YEARLY: '年付',
+}
+
 function MyOrders() {
+  const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
+  const [payingId, setPayingId] = useState<string | null>(null)
   const [invoiceModalVisible, setInvoiceModalVisible] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [invoiceLoading, setInvoiceLoading] = useState(false)
@@ -21,12 +30,43 @@ function MyOrders() {
   const loadOrders = async () => {
     setLoading(true)
     try {
-      const res = await orderApi.list()
-      setOrders(res.data?.data?.content || res.data || [])
+      const res = await orderApi.list({ page: 0, size: 100 })
+      setOrders(res.data?.data?.content || res.data?.data || res.data || [])
     } catch (error) {
       console.error('Failed to load orders:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePay = async (order: Order) => {
+    setPayingId(order.id)
+    try {
+      const res = await orderApi.pay(order.id)
+      if (res.data?.success === false) {
+        message.error(res.data?.message || '支付失败')
+        return
+      }
+      message.success('支付成功，订阅已开通')
+      await loadOrders()
+    } catch (error) {
+      console.error('Pay failed:', error)
+    } finally {
+      setPayingId(null)
+    }
+  }
+
+  const handleCancel = async (order: Order) => {
+    try {
+      const res = await orderApi.cancel(order.id)
+      if (res.data?.success === false) {
+        message.error(res.data?.message || '取消失败')
+        return
+      }
+      message.success('订单已取消')
+      await loadOrders()
+    } catch (error) {
+      console.error('Cancel failed:', error)
     }
   }
 
@@ -81,18 +121,28 @@ function MyOrders() {
       title: '订单号',
       dataIndex: 'orderNo',
       key: 'orderNo',
-      width: 200,
+      width: 180,
     },
     {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
-      render: (type: string) => getTypeTag(type),
+      render: (type: string, record: Order) => (
+        <Space direction="vertical" size={0}>
+          {getTypeTag(type)}
+          {record.plan && <Tag>{PLAN_LABELS[record.plan] || record.plan}</Tag>}
+        </Space>
+      ),
     },
     {
       title: '商品',
       dataIndex: 'itemTitle',
       key: 'itemTitle',
+      render: (title: string, record: Order) => (
+        <Button type="link" style={{ padding: 0 }} onClick={() => navigate(`/columns/${record.itemId}`)}>
+          {title}
+        </Button>
+      ),
     },
     {
       title: '金额',
@@ -118,9 +168,27 @@ function MyOrders() {
       render: (_: any, record: Order) => (
         <Space>
           {record.status === 'PENDING' && (
-            <Button type="primary" size="small">
-              去支付
-            </Button>
+            <>
+              <Button
+                type="primary"
+                size="small"
+                loading={payingId === record.id}
+                onClick={() => handlePay(record)}
+              >
+                去支付
+              </Button>
+              <Popconfirm
+                title="确定取消该订单吗？"
+                description="取消后该订单将无法支付"
+                okText="确定取消"
+                cancelText="再想想"
+                onConfirm={() => handleCancel(record)}
+              >
+                <Button size="small" danger>
+                  取消订单
+                </Button>
+              </Popconfirm>
+            </>
           )}
           {record.status === 'PAID' && (
             <Button

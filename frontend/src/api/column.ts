@@ -11,8 +11,9 @@ export const columnApi = {
   getArticle: (columnId: string, articleId: string) =>
     api.get(`/columns/${columnId}/articles/${articleId}`),
 
-  subscribe: (columnId: string, plan: 'MONTHLY' | 'QUARTERLY' | 'YEARLY') =>
-    api.post(`/columns/${columnId}/subscribe`, { plan }),
+  // 查询当前用户对某专栏的订阅结果（下单/支付结果）
+  mySubscription: (columnId: string) =>
+    api.get(`/columns/${columnId}/my-subscription`),
 
   mySubscriptions: () => api.get('/my/subscriptions'),
 
